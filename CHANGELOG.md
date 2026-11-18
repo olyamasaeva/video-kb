@@ -5,6 +5,7 @@
 
 ## [Unreleased]
 
+- README и README.ru.md переделаны витриной: баннер, бейджи, кнопки, скриншоты базы CS329Z в светлой и тёмной теме (`docs/img/`); CI `.github/workflows/tests.yml` (`uv run pytest -q` на ubuntu).
 - PUB-1: бинарные файлы (с нулевым байтом) сторож приватности пропускает — PNG давал ложный e-mail.
 - Оформление как у соседних скиллов: английский `README.md`, русский — `README.ru.md`, `LICENSE` (MIT), `docs/img/social-preview.png`.
 - Второй раунд ревью (изменение OpenSpec `harden-round-2`): личный список строк — вне
