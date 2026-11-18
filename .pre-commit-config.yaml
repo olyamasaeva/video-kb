@@ -1,0 +1,53 @@
+# Проверки до коммита. Образец — шаблон repo-shape: скрипты скилла маленькие,
+# поэтому стиль и формат — на весь код сразу, без пофайлового `files:`.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+        exclude: '\.(json|json3|svg)$'
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+        exclude: '\.(json|json3|svg)$'
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+        exclude: '(^|/)uv\.lock$'
+
+  # Версия ruff — как в [dependency-groups] dev.
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.2
+    hooks:
+      - id: ruff
+        args: [--fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        types_or: [python, pyi]
+
+  # Ноутбук коммитится без выводов. Ноутбуков пока нет — хук на будущее.
+  - repo: local
+    hooks:
+      - id: strip-notebook-outputs
+        name: Strip Jupyter notebook outputs
+        entry: python3 hooks/strip_notebook_outputs.py
+        language: system
+        types: [jupyter]
+
+  # Секреты не в git.
+  - repo: local
+    hooks:
+      - id: no-secret-files
+        name: секреты не коммитятся
+        entry: bash -c 'echo "Похоже на файл с секретами — $@"; exit 1' --
+        language: system
+        files: '(^|/)(\.env($|\.)|[^/]*creds[^/]*$|[^/]*credentials[^/]*$|id_rsa|\.netrc$|[^/]*cookies[^/]*$)'
+        exclude: '\.env\.(example|sample|template)$'
+
+  # Комментариев в коде нет; докстринги и прагмы можно.
+  - repo: local
+    hooks:
+      - id: no-comments
+        name: В коде нет комментариев
+        entry: python3 hooks/no_comments.py
+        language: system
+        types: [python]

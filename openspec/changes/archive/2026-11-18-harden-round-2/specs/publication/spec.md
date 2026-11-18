@@ -1,0 +1,45 @@
+## MODIFIED Requirements
+
+### Requirement: PUB-1 В отслеживаемых файлах нет личного контекста
+Ни один файл из `git ls-files`, включая сам тест-сторож, MUST NOT содержать общих маркеров личного контекста: домашний путь `/home/<имя>/` или `/Users/<имя>/`, адрес e-mail, id чата `thr_` с не меньше чем 8 знаками `[a-z0-9]`. Личные строки автора MUST NOT лежать в отслеживаемых файлах; их проверяет PUB-2 по списку вне репозитория.
+
+#### Scenario: PUB-1 сторож приватности
+- **WHEN** тест читает все отслеживаемые файлы, включая себя
+- **THEN** ни в одном нет маркеров
+- Тест: `tests/test_no_personal_context.py::test_pub1_no_personal_context`
+
+#### Scenario: PUB-1 маркеры на синтетических примерах
+- **WHEN** проверяются синтетические строки: путь с папкой `someone` под `/home` и под `/Users`, адрес `someone` на домене `example.org`, `thr_` и 8 знаков `[a-z0-9]`; и нейтральные `~/kb/example-course`, `/home/` без имени, `thr_x`
+- **THEN** каждая синтетическая строка — маркер, ни одна нейтральная — нет
+- Тест: `tests/test_no_personal_context.py::test_pub1_markers_on_synthetic_examples`
+
+## ADDED Requirements
+
+### Requirement: PUB-2 Хук находит строки личного списка, не повторяя их
+`hooks/denylist.py <файл-списка>` SHALL искать каждую строку списка (строка на строку; пустые и начинающиеся с `#` пропускаются) во всех файлах `git ls-files` текущей папки без учёта регистра, включая кириллицу, как отдельное слово: если строка начинается (кончается) буквой или цифрой, соседний знак слева (справа) MUST NOT быть буквой или цифрой. По каждому совпадению SHALL печатать `путь:номер строки` и вернуть код 1; строку списка MUST NOT печатать. Без совпадений — код 0, stdout пуст.
+
+#### Scenario: PUB-2 совпадения без эха
+- **WHEN** список `Секретик` и `acme_`, в отслеживаемом `a.md` на строке 2 «секретик», в отслеживаемом `b.md` на строке 1 «old_ACME_corp», в неотслеживаемом `c.md` «Секретик»
+- **THEN** код 1, в stdout ровно `a.md:2` и `b.md:1`, ни stdout, ни stderr не содержат строк списка без учёта регистра
+- Тест: `tests/test_denylist.py::test_pub2_finds_without_echo`
+
+#### Scenario: PUB-2 строка внутри другого слова не совпадает
+- **WHEN** список `Ира`, отслеживаемый файл «лира и Пальмира, иранский»
+- **THEN** код 0, stdout пуст
+- Тест: `tests/test_denylist.py::test_pub2_word_boundaries`
+
+### Requirement: PUB-3 Недоступный список — ошибка, а не успех
+Если файла списка нет, он не читается или в нём нет ни одной строки, `hooks/denylist.py` MUST вернуть код 2 с путём к списку в stderr.
+
+#### Scenario: PUB-3 список недоступен
+- **WHEN** файла списка нет; или в нём только комментарий и пустая строка
+- **THEN** код 2, в stderr путь к списку, stdout пуст
+- Тест: `tests/test_denylist.py::test_pub3_missing_or_empty_list_fails`
+
+### Requirement: PUB-4 Хук личного списка подключён к pre-commit
+`.pre-commit-config.yaml` SHALL содержать локальный хук `private-denylist`, который вызывает `hooks/denylist.py` с `$HOME/.config/video-kb/denylist.txt`.
+
+#### Scenario: PUB-4 хук подключён
+- **WHEN** тест читает `.pre-commit-config.yaml`
+- **THEN** есть хук `private-denylist` с `hooks/denylist.py` и `$HOME/.config/video-kb/denylist.txt`
+- Тест: `tests/test_denylist.py::test_pub4_hook_configured`

@@ -1,0 +1,28 @@
+site_name: video-kb
+site_description: Скилл Claude Code — база знаний из видеокурса по автосубтитрам YouTube
+
+theme:
+  name: material
+  language: ru
+
+nav:
+  - Обзор: index.md
+  - Спеки: specs.md
+  - Скрипты: api.md
+
+markdown_extensions:
+  - toc:
+      toc_depth: 3
+  - admonition
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - scripts
+          options:
+            show_source: false
+            show_root_heading: true
+            docstring_style: google

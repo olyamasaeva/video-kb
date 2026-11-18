@@ -1,0 +1,48 @@
+schema: spec-driven
+
+context: |
+  Language: ru
+  All artifacts must be written in ru.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Project: video-kb — скилл Claude Code: база знаний из видеокурса по автосубтитрам
+  YouTube. Промпт скилла — SKILL.md, детерминированная часть — независимые
+  скрипты в scripts/ (json3_to_text, normalize, locate, check_quotes, verify_kb,
+  skill_evidence, skill_lint).
+  Before any artifact read AGENTS.md (rules there override defaults) and README.md.
+  Scripts use only the Python standard library and are called by path
+  (`python3 scripts/<имя>.py …`); no package, no runtime dependencies.
+  No personal context of the author (home paths, names, real knowledge bases) in any
+  tracked file — generic markers guarded by tests/test_no_personal_context.py, the
+  author's own strings by the local pre-commit hook `private-denylist`
+  (hooks/denylist.py, list ~/.config/video-kb/denylist.txt outside the repo, never
+  committed); examples are synthetic
+  (course `example-course`, paths `~/kb/<курс>`). Tests build synthetic inputs in
+  `tmp_path` and run the scripts as subprocesses.
+  Tests: `uv run pytest` from repo root.
+  Specs are executable: every `### Requirement: <ID> …` is guarded by tests marked
+  `@pytest.mark.contract("<ID>")`; tests/test_openspec_contract.py fails on a requirement
+  without a test or a marker without a requirement. IDs are never reused or renumbered.
+  Capabilities and ID prefixes: subtitles SUB- (json3_to_text.py), normalize NRM-,
+  locate LOC-, quotes QUO- (check_quotes.py), verify VER- (verify_kb.py),
+  skills SKL- (skill_evidence.py, skill_lint.py), prompt PRM- (checkable invariants of
+  SKILL.md), publication PUB- (what tracked files may contain).
+
+rules:
+  specs:
+    - Every requirement heading starts with a contract ID (prefix of the capability, e.g. SUB-1, VER-4), then a short name.
+    - New IDs continue the capability's numbering; never reuse an ID, even a REMOVED one.
+    - Requirements describe observable behaviour of a script — input → stdout/stderr, written files, exit code — not its internals; prompt and publication requirements describe checkable content of SKILL.md and tracked files.
+    - Every scenario's WHEN/THEN must be checkable by one pytest test; name that test in a `- Тест:` line under the scenario.
+  tasks:
+    - For each ADDED or MODIFIED requirement, first a task to write or change the test with @pytest.mark.contract("<ID>") and see it fail, then the implementation task.
+    - Scripts stay standard-library only; a new dependency needs the author's approval.
+    - Last task — run `uv run pytest` from the repo root; all green, including tests/test_openspec_contract.py.
+
+operations:
+  apply:
+    guidance:
+      - Write the contract test before the code and show it failing once.
+  archive:
+    guidance:
+      - Archive only when `uv run pytest` is green and `openspec validate --specs --strict` passes after the merge.
